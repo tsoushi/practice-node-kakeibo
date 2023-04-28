@@ -19,7 +19,8 @@ app.post('/user', async (req, res) => {
     if (typeof req.body.email === 'string') {
         prisma.user.create({
             data: {
-                email: req.body.email
+                email: req.body.email,
+                password: 'test'
             }
         })
             .then((user) => {
