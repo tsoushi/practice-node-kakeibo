@@ -11,13 +11,15 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  bank      Bank[]
-  records   Record[]
+  id                Int               @id @default(autoincrement())
+  email             String            @unique
+  password          String
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  bank              Bank[]
+  records           Record[]
+  incomeCategories  IncomeCategory[]
+  expenseCategories ExpenseCategory[]
 }
 
 model RecordType {
@@ -27,35 +29,71 @@ model RecordType {
 }
 
 model Record {
-  id         Int             @id @default(autoincrement())
-  title      String
-  recordType RecordType      @relation(fields: [typeName], references: [name])
-  typeName   String
-  inRecord   CashFlowRecord? @relation("inRecord")
-  outRecord  CashFlowRecord? @relation("outRecord")
-  detailText String          @default("")
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
-  user       User            @relation(fields: [userId], references: [id])
-  userId     Int
+  id            Int            @id @default(autoincrement())
+  user          User           @relation(fields: [userId], references: [id])
+  userId        Int
+  title         String
+  recordType    RecordType     @relation(fields: [typeId], references: [id])
+  typeId        Int
+  incomeRecord  IncomeRecord?
+  expenseRecord ExpenseRecord?
+  detailText    String         @default("")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Bank {
-  id              Int              @id @default(autoincrement())
-  user            User             @relation(fields: [userId], references: [id])
-  userId          Int
-  name            String
-  amount          Int
-  cashFlowRecords CashFlowRecord[]
+  id             Int             @id @default(autoincrement())
+  user           User            @relation(fields: [userId], references: [id])
+  userId         Int
+  name           String
+  amount         Int
+  incomeRecords  IncomeRecord[]
+  expenseRecords ExpenseRecord[]
 }
 
-model CashFlowRecord {
-  id          Int    @id @default(autoincrement())
-  recordAsIn  Record @relation("inRecord", fields: [recordId], references: [id])
-  recordAsOut Record @relation("outRecord", fields: [recordId], references: [id])
-  recordId    Int    @unique
-  bank        Bank   @relation(fields: [bankId], references: [id])
-  bankId      Int
-  amount      Int
+model IncomeRecord {
+  id         Int            @id @default(autoincrement())
+  record     Record         @relation(fields: [recordId], references: [id])
+  recordId   Int            @unique
+  bank       Bank           @relation(fields: [bankId], references: [id])
+  bankId     Int
+  category   IncomeCategory @relation(fields: [categoryId], references: [id])
+  categoryId Int
+  amount     Int
 }
 
+model IncomeCategory {
+  id       Int              @id @default(autoincrement())
+  user     User?            @relation(fields: [userId], references: [id])
+  userId   Int?
+  parent   IncomeCategory?  @relation("IncomeCategorySelfRelation", fields: [parentId], references: [id])
+  parentId Int
+  children IncomeCategory[] @relation("IncomeCategorySelfRelation")
+  name     String
+
+  incomeRecords IncomeRecord[]
+}
+
+model ExpenseRecord {
+  id         Int             @id @default(autoincrement())
+  record     Record          @relation(fields: [recordId], references: [id])
+  recordId   Int             @unique
+  bank       Bank            @relation(fields: [bankId], references: [id])
+  bankId     Int
+  category   ExpenseCategory @relation(fields: [categoryId], references: [id])
+  categoryId Int
+  amount     Int
+}
+
+model ExpenseCategory {
+  id       Int               @id @default(autoincrement())
+  user     User?             @relation(fields: [userId], references: [id])
+  userId   Int?
+  parent   ExpenseCategory?  @relation("ExpenseCategorySelfRelation", fields: [parentId], references: [id])
+  parentId Int?
+  children ExpenseCategory[] @relation("ExpenseCategorySelfRelation")
+  name     String
+
+  expenseRecords ExpenseRecord[]
+}
