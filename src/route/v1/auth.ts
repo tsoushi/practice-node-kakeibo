@@ -1,12 +1,15 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 
+import { Auth, UserClaim } from '../../core/auth';
 import { Password } from '../../core/password';
+import { APIResponseTemplate } from '../../core/response';
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
 
+// ログイン時のパラメータ型
 type LoginArgs = {
     userName: string,
     password: string
@@ -18,7 +21,7 @@ const isLoginArgs = (value: unknown): value is LoginArgs => {
         typeof loginArgs?.password === 'string'
     );
 };
-
+// ログイン認証
 router.post('/login', async (req, res) => {
     if (isLoginArgs(req.body)) {
         const user = await prisma.user.findUnique({
@@ -29,20 +32,20 @@ router.post('/login', async (req, res) => {
 
         if (user !== null) {
             if (Password.verifySync(req.body.password, user.password)) {
-                res.json({status: 'ok'});
+                const token = Auth.signJWT({user: {id: user.id}});
+                res.json({status: 'ok', token: token});
             } else {
-                res.json({status: 'failed', message: 'password is incorrect'});
+                res.json(APIResponseTemplate.failed('password is incorrect'));
             }
         } else {
-            res.json({status: 'failed', message: 'user not found'});
+            res.json(APIResponseTemplate.failed('user not found'));
         }
     } else {
-        res.json({status: 'failed', message: 'wrong parameters'});
+        res.json(APIResponseTemplate.failed('wrong parameters'));
     }
 });
 
 
-// アカウント作成
 // 新規アカウント作成時のjsonパラメータ
 type RegisterArgs = {
     userName: string,
@@ -57,6 +60,7 @@ const isRegisterArgs = (value: unknown): value is RegisterArgs => {
         (typeof registerArgs?.email === 'string' || registerArgs?.email === undefined)
     );
 };
+// アカウント作成
 router.post('/register', async (req, res) => {
     if (isRegisterArgs(req.body)) {
         prisma.user.create({
