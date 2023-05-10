@@ -7,25 +7,24 @@ import { Auth, UserClaim } from '../../core/auth';
 const router = express.Router();
 const prisma = new PrismaClient();
 
-type AuthRequiredArgs = {
-    token: string
-};
-const isAuthRequiredArgs = (value: unknown): value is AuthRequiredArgs => {
-    const authRequiredArgs = value as AuthRequiredArgs;
-
-    return (
-        typeof authRequiredArgs?.token === 'string'
-    );
-}
-
+// JWTによるユーザー認証ミドルウェア
 router.use('/', async (req, res, next) => {
-    if (!isAuthRequiredArgs(req.body)) {
-        res.json(APIResponseTemplate.failed('token field is required'));
+    const authHeader = req.headers.authorization;
+
+    // ヘッダーの形式検証
+    if (authHeader === undefined ||
+        authHeader.split(' ')[0] !== 'Bearer' ||
+        authHeader.split(' ').length !== 2
+    ) {
+        res.json(APIResponseTemplate.failed('not authorized'));
         return;
     }
 
+    // JWT
+    const token = authHeader.split(' ')[1];
+
     try {
-        const claim: UserClaim = Auth.verifyJWT(req.body.token);
+        const claim: UserClaim = Auth.verifyJWT(token);
         const user = await prisma.user.findFirst({
             where: {
                 id: claim.user.id
