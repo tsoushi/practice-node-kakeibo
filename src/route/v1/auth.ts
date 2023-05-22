@@ -21,7 +21,7 @@ const isLoginArgs = (value: unknown): value is LoginArgs => {
         typeof loginArgs?.password === 'string'
     );
 };
-// ログイン認証
+// ログイン認証とJWT署名
 router.post('/login', async (req, res) => {
     if (isLoginArgs(req.body)) {
         const user = await prisma.user.findUnique({

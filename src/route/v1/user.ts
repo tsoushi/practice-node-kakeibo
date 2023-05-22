@@ -31,6 +31,7 @@ router.use('/', async (req, res, next) => {
             }
         });
         if (user !== null) {
+            // 認証に成功、次に処理を渡す
             req.user = user;
             next();
         } else res.json(APIResponseTemplate.failed('Auth Rrror: user not found'));

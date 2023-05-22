@@ -1,5 +1,8 @@
+// 認証系の処理
+
 import jwt from 'jsonwebtoken';
 
+// JWTに組み込まれるユーザー情報型
 export type UserClaim = {
     user: {
         id: number
